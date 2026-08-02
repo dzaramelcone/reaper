@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reaper-promise"
+version = "0.1.0"
+description = "Typed durable tasks and a warm POSIX worker pool"
+license = "MIT"
+requires-python = ">=3.14"
+dependencies = [
+    "asyncpg>=0.31",
+    "pydantic>=2.11,<3",
+    "pydantic-settings>=2.10,<3",
+]
+
+[project.scripts]
+reaper = "reaper.cli:main"
+
+[dependency-groups]
+dev = [
+    "asyncpg-stubs>=0.30",
+    "hypothesis>=6.161",
+    "mypy>=1.17",
+    "pytest>=8.4",
+    "pytest-cov>=6.2",
+    "ruff>=0.12",
+    "sqlfluff>=4.2.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["reaper"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+markers = [
+    "fuzz: generated state and integration permutations",
+    "postgres: needs the local Postgres service",
+    "stress: real process race and churn checks",
+]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+concurrency = ["multiprocessing"]
+parallel = true
+patch = ["subprocess"]
+sigterm = true
+source = ["reaper"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.sqlfluff.core]
+dialect = "postgres"
+exclude_rules = "AL01,AL03,AL05,AM05,PG01,RF03,RF04,ST09"
+max_line_length = 100
+templater = "placeholder"
+
+[tool.sqlfluff.templater.placeholder]
+param_style = "numeric_dollar"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.mypy]
+explicit_package_bases = true
+python_version = "3.14"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = true
