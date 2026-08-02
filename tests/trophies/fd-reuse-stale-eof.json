@@ -1,0 +1,55 @@
+{
+  "scenario": {
+    "version": 1,
+    "seed": 0,
+    "target": 2,
+    "events": [
+      {
+        "kind": "eof",
+        "identity": {"fd": 10, "gen": 1},
+        "gen": null,
+        "job": null,
+        "ok": true
+      },
+      {
+        "kind": "eof",
+        "identity": {"fd": 10, "gen": 1},
+        "gen": null,
+        "job": null,
+        "ok": true
+      }
+    ]
+  },
+  "failure": {
+    "index": 1,
+    "event": {
+      "kind": "eof",
+      "identity": {"fd": 10, "gen": 1},
+      "gen": null,
+      "job": null,
+      "ok": true
+    },
+    "expected": {
+      "closing": false,
+      "slots": [
+        {"identity": {"fd": 10, "gen": 3}, "state": "starting", "job": null},
+        {"identity": {"fd": 11, "gen": 2}, "state": "starting", "job": null}
+      ],
+      "pending_spawns": [],
+      "queue": [],
+      "done": [],
+      "failed": []
+    },
+    "actual": {
+      "closing": false,
+      "slots": [
+        {"identity": {"fd": 10, "gen": 4}, "state": "starting", "job": null},
+        {"identity": {"fd": 11, "gen": 2}, "state": "starting", "job": null}
+      ],
+      "pending_spawns": [],
+      "queue": [],
+      "done": [],
+      "failed": []
+    }
+  }
+}

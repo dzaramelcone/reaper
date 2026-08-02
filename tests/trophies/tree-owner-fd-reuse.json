@@ -1,0 +1,162 @@
+{
+  "scenario": {
+    "version": 1,
+    "seed": 0,
+    "target": 1,
+    "depth": 2,
+    "events": [
+      {
+        "path": [10],
+        "owner": {"fd": 10, "gen": 1},
+        "event": {
+          "kind": "submit",
+          "identity": null,
+          "gen": null,
+          "job": "job-0",
+          "ok": true
+        }
+      },
+      {
+        "path": [10],
+        "owner": {"fd": 10, "gen": 1},
+        "event": {
+          "kind": "eof",
+          "identity": {"fd": 10, "gen": 1},
+          "gen": null,
+          "job": null,
+          "ok": true
+        }
+      }
+    ]
+  },
+  "failure": {
+    "index": 1,
+    "routed": {
+      "path": [10],
+      "owner": {"fd": 10, "gen": 1},
+      "event": {
+        "kind": "eof",
+        "identity": {"fd": 10, "gen": 1},
+        "gen": null,
+        "job": null,
+        "ok": true
+      }
+    },
+    "expected": {
+      "nodes": [
+        {
+          "path": [],
+          "owner": null,
+          "reaper": {
+            "closing": false,
+            "slots": [
+              {
+                "identity": {"fd": 10, "gen": 1},
+                "state": "starting",
+                "job": null
+              }
+            ],
+            "pending_spawns": [],
+            "queue": [],
+            "done": [],
+            "failed": []
+          }
+        },
+        {
+          "path": [10],
+          "owner": {"fd": 10, "gen": 1},
+          "reaper": {
+            "closing": false,
+            "slots": [
+              {
+                "identity": {"fd": 10, "gen": 2},
+                "state": "starting",
+                "job": null
+              }
+            ],
+            "pending_spawns": [],
+            "queue": ["job-0"],
+            "done": [],
+            "failed": []
+          }
+        },
+        {
+          "path": [10, 10],
+          "owner": {"fd": 10, "gen": 2},
+          "reaper": {
+            "closing": false,
+            "slots": [
+              {
+                "identity": {"fd": 10, "gen": 1},
+                "state": "starting",
+                "job": null
+              }
+            ],
+            "pending_spawns": [],
+            "queue": [],
+            "done": [],
+            "failed": []
+          }
+        }
+      ]
+    },
+    "actual": {
+      "nodes": [
+        {
+          "path": [],
+          "owner": null,
+          "reaper": {
+            "closing": false,
+            "slots": [
+              {
+                "identity": {"fd": 10, "gen": 1},
+                "state": "starting",
+                "job": null
+              }
+            ],
+            "pending_spawns": [],
+            "queue": [],
+            "done": [],
+            "failed": []
+          }
+        },
+        {
+          "path": [10],
+          "owner": {"fd": 10, "gen": 1},
+          "reaper": {
+            "closing": false,
+            "slots": [
+              {
+                "identity": {"fd": 10, "gen": 2},
+                "state": "starting",
+                "job": null
+              }
+            ],
+            "pending_spawns": [],
+            "queue": ["job-0"],
+            "done": [],
+            "failed": []
+          }
+        },
+        {
+          "path": [10, 10],
+          "owner": {"fd": 10, "gen": 1},
+          "reaper": {
+            "closing": false,
+            "slots": [
+              {
+                "identity": {"fd": 10, "gen": 1},
+                "state": "starting",
+                "job": null
+              }
+            ],
+            "pending_spawns": [],
+            "queue": [],
+            "done": [],
+            "failed": []
+          }
+        }
+      ]
+    }
+  }
+}
