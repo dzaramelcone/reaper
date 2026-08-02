@@ -1,0 +1,24 @@
+[Unit]
+Description=Reaper durable workflow workers
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+WatchdogSec=30s
+User=reaper
+Group=reaper
+WorkingDirectory=/opt/reaper
+EnvironmentFile=/etc/reaper/reaper.env
+ExecStart=/opt/reaper/.venv/bin/reaper
+Restart=on-failure
+RestartSec=2
+KillMode=mixed
+TimeoutStopSec=60
+LimitNOFILE=65536
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
