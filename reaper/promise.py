@@ -35,14 +35,14 @@ from pydantic import (
     create_model,
 )
 
-from reaper.api import Reaper
+from reaper.api import Store
 from reaper.database import JSON_ADAPTER, task_channel
 from reaper.log import write
 from reaper.maintenance.models import DeleteExpired
 from reaper.models import DEFAULT_TOPIC, PromiseState, ResultState
 from reaper.postgres import PostgresListener, PostgresPool
 from reaper.promises.models import PromiseRecord, SubmitTimer
-from reaper.settings import DEFAULT_RETENTION_MS, ReaperSettings
+from reaper.settings import ReaperSettings
 from reaper.tasks import TaskExecution
 from reaper.tasks.models import SubmitCall
 from reaper.waits.models import WaitedPromise
@@ -130,41 +130,37 @@ def set_default_store(
     return default_store.set(store)
 
 
-class ReaperClient(BaseModel):
+class Reaper(BaseModel):
     """Bind durable functions to the native Reaper SQL domains."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    postgres_dsn: PostgresDsn | None = None
-    retention_ms: Annotated[int, Field(ge=60_000)] = DEFAULT_RETENTION_MS
+    settings: Annotated[ReaperSettings, Field(exclude=True)]
     database: Annotated[PostgresPool | None, Field(exclude=True)] = None
-    store: Annotated[Reaper | None, Field(exclude=True)] = None
+    store: Annotated[Store | None, Field(exclude=True)] = None
     token: Annotated[
         contextvars.Token[PromiseStore | None] | None,
         Field(exclude=True),
     ] = None
 
-    @classmethod
-    def from_settings(cls, settings: ReaperSettings) -> Self:
-        """Build a client from typed settings."""
+    def __init__(self, settings: ReaperSettings | None = None) -> None:
+        super().__init__(settings=ReaperSettings() if settings is None else settings)
 
-        return cls(postgres_dsn=settings.postgres_dsn, retention_ms=settings.retention_ms)
+    @property
+    def postgres_dsn(self) -> PostgresDsn:
+        return self.settings.postgres_dsn
 
-    @classmethod
-    def from_environment(cls) -> Self:
-        """Build a client from `REAPER_` environment settings."""
-
-        return cls.from_settings(ReaperSettings())
+    @property
+    def retention_ms(self) -> int:
+        return self.settings.retention_ms
 
     async def __aenter__(self) -> Self:
         if self.database is not None:
             return self
-        if self.postgres_dsn is None:
-            raise RuntimeError("set a Postgres DSN first")
         self.database = PostgresPool(self.postgres_dsn)
         await self.database.connect()
         pool = self.database.get_pool()
-        self.store = Reaper(pool)
+        self.store = Store(pool)
         self.token = set_default_store(self)
         write(log, logging.DEBUG, "promise link opened")
         return self
@@ -188,7 +184,7 @@ class ReaperClient(BaseModel):
                 self.store = None
                 write(log, logging.DEBUG, "promise link closed")
 
-    def get_store(self) -> Reaper:
+    def get_store(self) -> Store:
         if self.store is None:
             raise RuntimeError("open the Reaper client first")
         return self.store
@@ -207,8 +203,6 @@ class ReaperClient(BaseModel):
     ) -> PostgresListener:
         """Open one dedicated listener for a task topic."""
 
-        if self.postgres_dsn is None:
-            raise RuntimeError("a listener needs a Postgres DSN")
         if not address:
             raise ValueError("a listener needs a task topic")
         channel = task_channel(address)
@@ -750,22 +744,10 @@ class Durable:
         )
         return reduced[0]
 
-    @overload
-    async def sleep(self, delay: float) -> None: ...
-
-    @overload
-    async def sleep(self, delay: timedelta) -> None: ...
-
-    async def sleep(self, delay: object) -> None:
+    async def sleep(self, delay: float | timedelta) -> None:
         """Suspend on one durable SQL timer."""
 
-        match delay:
-            case timedelta():
-                seconds = delay.total_seconds()
-            case float() | int():
-                seconds = float(delay)
-            case _:
-                raise TypeError("sleep delay must be seconds or timedelta")
+        seconds = delay.total_seconds() if isinstance(delay, timedelta) else float(delay)
         if math.isnan(seconds):
             raise ValueError("sleep delay cannot be nan")
         if seconds <= 0:

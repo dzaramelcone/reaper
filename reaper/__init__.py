@@ -1,6 +1,6 @@
 """Public API for Reaper durable promises."""
 
-from reaper.api import Reaper
+from reaper.api import Store
 from reaper.database import (
     CrossGraphWaitError,
     IdempotencyConflictError,
@@ -11,7 +11,7 @@ from reaper.database import (
 from reaper.maintenance import Maintenance
 from reaper.maintenance.models import Deleted, DeleteExpired, ProcessDue, ProcessedDue
 from reaper.models import PromiseState
-from reaper.promise import ReaperClient, durable
+from reaper.promise import Reaper, durable
 from reaper.promises import Promises
 from reaper.promises.models import PromiseRecord, SubmitTimer
 from reaper.tasks import Tasks
@@ -38,9 +38,9 @@ __all__ = [
     "PromiseState",
     "Promises",
     "Reaper",
-    "ReaperClient",
     "ReaperSQLError",
     "RetryResult",
+    "Store",
     "SubmitCall",
     "SubmitTimer",
     "TaskNotFoundError",

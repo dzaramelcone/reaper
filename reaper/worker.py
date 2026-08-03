@@ -15,7 +15,7 @@ from reaper.postgres import ListenerActivity, ListenerWake
 from reaper.promise import (
     Context,
     DurableFunction,
-    ReaperClient,
+    Reaper,
     Result,
 )
 from reaper.settings import (
@@ -23,6 +23,7 @@ from reaper.settings import (
     DEFAULT_LISTENER_PROBE_RATE,
     DEFAULT_LISTENER_RECYCLE_RATE,
     DEFAULT_RETENTION_MS,
+    ReaperSettings,
 )
 from reaper.skeleton import (
     LifecycleEvent,
@@ -118,7 +119,7 @@ async def settle_execution(
 
 
 async def run_claimed_task(
-    client: ReaperClient,
+    client: Reaper,
     execution: TaskExecution,
     lifecycle: LifecycleReporter = ignore_lifecycle,
 ) -> ResultState | None:
@@ -188,9 +189,11 @@ async def poll_tasks(
 
     if not topic:
         raise ValueError("task polling requires a topic")
-    async with ReaperClient(
-        postgres_dsn=PostgresDsn(postgres_dsn),
-        retention_ms=retention_ms,
+    async with Reaper(
+        ReaperSettings(
+            postgres_dsn=PostgresDsn(postgres_dsn),
+            retention_ms=retention_ms,
+        )
     ) as client:
         await lifecycle(LifecycleEvent(kind=LifecycleKind.LINK_OPENED))
         listener = await client.listen(
@@ -264,9 +267,11 @@ async def poll_maintenance(
 ) -> None:
     """Advance deadlines and collect expired roots on one cadence."""
 
-    async with ReaperClient(
-        postgres_dsn=PostgresDsn(postgres_dsn),
-        retention_ms=retention_ms,
+    async with Reaper(
+        ReaperSettings(
+            postgres_dsn=PostgresDsn(postgres_dsn),
+            retention_ms=retention_ms,
+        )
     ) as client:
         await lifecycle(LifecycleEvent(kind=LifecycleKind.LINK_OPENED))
         await lifecycle(LifecycleEvent(kind=LifecycleKind.READY))

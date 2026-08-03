@@ -108,7 +108,7 @@ def test_wait_registration_rejects_missing_and_cross_graph_rows() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=2, max_size=3)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         topic = f"reaper-invalid-waits-{uuid.uuid4().hex}"
         first_id = f"{topic}:first"
         second_id = f"{topic}:second"
@@ -164,7 +164,7 @@ def test_claim_excludes_function_versions_unsupported_by_worker() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=1, max_size=2)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         topic = f"reaper-versions-{uuid.uuid4().hex}"
         try:
             for version in (1, 2):
@@ -199,7 +199,7 @@ def test_reaper_sql_lock_replay_timer_retry_and_retention() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=2, max_size=4)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         try:
             now = datetime.now(UTC)
             topic = f"reaper-sql-{uuid.uuid4().hex}"
@@ -322,7 +322,7 @@ def test_reaper_sql_concurrent_wait_registration_and_fan_in() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=4, max_size=32)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         prefix = f"reaper-races-{uuid.uuid4().hex}"
         root_topic = f"{prefix}:root"
         child_topic = f"{prefix}:child"
@@ -494,7 +494,7 @@ def test_reaper_sql_concurrent_fan_in_settles_without_deadlock() -> None:
     async def check() -> None:
         width = 24
         pool = await create_pool(dsn, min_size=width, max_size=width + 2)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         prefix = f"reaper-lock-order-{uuid.uuid4().hex}"
         root_topic = f"{prefix}:root"
         producer_topic = f"{prefix}:producer"
@@ -582,7 +582,7 @@ def test_reaper_sql_deadlock_victim_remains_claimable() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=4, max_size=6)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         prefix = f"reaper-deadlock-{uuid.uuid4().hex}"
         root_topic = f"{prefix}:root"
         producer_topic = f"{prefix}:producer"
@@ -680,7 +680,7 @@ def test_reaper_sql_claims_survive_cancellation_connection_loss_and_idle_timeout
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=2, max_size=6)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         promise_id = f"reaper-claim-faults-{fault}-{uuid.uuid4().hex}"
         await store.tasks.submit(
             reaper.SubmitCall(
@@ -784,7 +784,7 @@ def test_task_execution_timeout_also_bounds_active_row_lock_waits() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=2, max_size=3)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         promise_id = f"reaper-lock-timeout-{uuid.uuid4().hex}"
         await store.tasks.submit(
             reaper.SubmitCall(
@@ -831,7 +831,7 @@ def test_task_execution_timeout_also_bounds_active_queries() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=1, max_size=2)
-        store = reaper.Reaper(pool)
+        store = reaper.Store(pool)
         promise_id = f"reaper-statement-timeout-{uuid.uuid4().hex}"
         await store.tasks.submit(
             reaper.SubmitCall(
@@ -867,13 +867,13 @@ def test_reaper_sql_query_and_commit_ambiguity_remain_idempotent() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=2, max_size=6)
-        plain = reaper.Reaper(pool)
+        plain = reaper.Store(pool)
         prefix = f"reaper-db-faults-{uuid.uuid4().hex}"
 
         async def run_fault(suffix: str, step: FaultStep) -> str:
             promise_id = f"{prefix}:{suffix}"
             runtime = FaultRuntime([step], DeterministicScheduler())
-            faulted = reaper.Reaper(FaultPool(pool, runtime))
+            faulted = reaper.Store(FaultPool(pool, runtime))
             await faulted.tasks.submit(
                 reaper.SubmitCall(
                     id=promise_id,
@@ -890,7 +890,7 @@ def test_reaper_sql_query_and_commit_ambiguity_remain_idempotent() -> None:
             assert not runtime.steps
             return promise_id
 
-        async def complete_once(store: reaper.Reaper, promise_id: str) -> None:
+        async def complete_once(store: reaper.Store, promise_id: str) -> None:
             async with store.tasks.claim(promise_id) as execution:
                 assert execution is not None
                 await execution.complete("committed")
@@ -951,7 +951,7 @@ def test_reaper_sql_commit_cancellation_resolves_by_durable_state(
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=2, max_size=4)
-        plain = reaper.Reaper(pool)
+        plain = reaper.Store(pool)
         promise_id = f"reaper-commit-cancel-{phase}-{uuid.uuid4().hex}"
         await plain.tasks.submit(
             reaper.SubmitCall(
@@ -972,7 +972,7 @@ def test_reaper_sql_commit_cancellation_resolves_by_durable_state(
             ],
             DeterministicScheduler(),
         )
-        faulted = reaper.Reaper(FaultPool(pool, runtime))
+        faulted = reaper.Store(FaultPool(pool, runtime))
         try:
 
             async def complete_faulted() -> None:
@@ -1037,7 +1037,7 @@ def test_reaper_sql_release_fault_does_not_leak_a_pool_holder(
             ],
             DeterministicScheduler(),
         )
-        faulted = reaper.Reaper(FaultPool(pool, runtime))
+        faulted = reaper.Store(FaultPool(pool, runtime))
         promise_id = f"reaper-release-cancel-{uuid.uuid4().hex}"
         result = (
             await asyncio.gather(
@@ -1085,7 +1085,7 @@ def test_reaper_sql_post_acquire_cancellation_does_not_leak_a_pool_holder() -> N
             ],
             DeterministicScheduler(),
         )
-        faulted = reaper.Reaper(FaultPool(pool, runtime))
+        faulted = reaper.Store(FaultPool(pool, runtime))
         result = (
             await asyncio.gather(
                 faulted.tasks.submit(
@@ -1119,7 +1119,7 @@ def test_reaper_sql_claim_failure_survives_rollback_failure() -> None:
 
     async def check() -> None:
         pool = await create_pool(dsn, min_size=1, max_size=2)
-        plain = reaper.Reaper(pool)
+        plain = reaper.Store(pool)
         promise_id = f"reaper-double-fault-{uuid.uuid4().hex}"
         runtime = FaultRuntime(
             [
@@ -1136,7 +1136,7 @@ def test_reaper_sql_claim_failure_survives_rollback_failure() -> None:
             ],
             DeterministicScheduler(),
         )
-        faulted = reaper.Reaper(FaultPool(pool, runtime))
+        faulted = reaper.Store(FaultPool(pool, runtime))
 
         try:
             await plain.tasks.submit(

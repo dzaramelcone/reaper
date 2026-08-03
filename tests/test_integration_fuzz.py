@@ -11,7 +11,7 @@ from hypothesis import given, settings, strategies
 from pydantic import BaseModel, ConfigDict
 
 from reaper.pool import SkeletonPool
-from reaper.promise import ReaperClient
+from reaper.promise import Reaper
 from reaper.settings import PoolConfig, PoolKind, ReaperSettings
 from tests.workers import durable_timer_workflow, promise_hold, promise_value
 
@@ -74,7 +74,7 @@ def test_generated_scenarios_use_real_processes_and_postgres(
         async with SkeletonPool.from_settings(settings_model) as reaper:
             assert len(reaper.child_pools) == 1
             timer_pool = reaper.child_pools[0]
-            async with ReaperClient.from_settings(settings_model):
+            async with Reaper(settings_model):
                 for index, action in enumerate(scenario.actions):
                     match action:
                         case IntegrationAction.VALUE:

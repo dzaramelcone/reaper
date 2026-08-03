@@ -8,7 +8,7 @@ import pytest
 from reaper.database import TransactionExecutor
 from reaper.models import DEFAULT_TOPIC, ResultState
 from reaper.postgres import ListenerActivity
-from reaper.promise import Error, ReaperClient, Result, durable
+from reaper.promise import Error, Reaper, Result, durable
 from reaper.promises.models import PromiseRecord
 from reaper.skeleton import LifecycleEvent, LifecycleKind, TaskReleaseReason
 from reaper.tasks import TaskExecution
@@ -146,7 +146,7 @@ def test_version_mismatch_releases_without_consuming_an_attempt() -> None:
             events.append(event)
 
         outcome = await run_claimed_task(
-            cast(ReaperClient, object()),
+            cast(Reaper, object()),
             execution,
             report,
         )

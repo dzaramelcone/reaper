@@ -66,7 +66,7 @@ async def explain(
     }
 
 
-async def seed_ready(store: reaper.Reaper, prefix: str, count: int) -> str:
+async def seed_ready(store: reaper.Store, prefix: str, count: int) -> str:
     topic = f"{prefix}:ready"
     await store.tasks.submit_many(
         tuple(
@@ -82,7 +82,7 @@ async def seed_ready(store: reaper.Reaper, prefix: str, count: int) -> str:
     return topic
 
 
-async def seed_future(store: reaper.Reaper, prefix: str, count: int) -> str:
+async def seed_future(store: reaper.Store, prefix: str, count: int) -> str:
     topic = f"{prefix}:future"
     available_at = datetime.now(UTC) + timedelta(days=1)
     await store.tasks.submit_many(
@@ -100,7 +100,7 @@ async def seed_future(store: reaper.Reaper, prefix: str, count: int) -> str:
     return topic
 
 
-async def seed_fan_in(store: reaper.Reaper, prefix: str, waiters: int) -> tuple[str, str]:
+async def seed_fan_in(store: reaper.Store, prefix: str, waiters: int) -> tuple[str, str]:
     root_id = f"{prefix}:fan-in"
     shared_id = f"{root_id}:shared"
     topic = f"{prefix}:waiters"
@@ -145,7 +145,7 @@ async def seed_fan_in(store: reaper.Reaper, prefix: str, waiters: int) -> tuple[
 
 async def collect(dsn: str) -> list[dict[str, Any]]:
     pool = await asyncpg.create_pool(dsn, min_size=16, max_size=32)
-    store = reaper.Reaper(pool)
+    store = reaper.Store(pool)
     prefix = f"plan-{uuid.uuid4().hex}"
     try:
         topic = await seed_ready(store, prefix, 2_000)

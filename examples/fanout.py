@@ -2,7 +2,7 @@
 
 import asyncio
 
-from reaper import ReaperClient, durable
+from reaper import Reaper, durable
 
 
 @durable(execution_timeout=5.0)
@@ -23,7 +23,7 @@ async def sum_squares(values: list[int]) -> int:
 async def main() -> None:
     """Execute the composed workflow."""
 
-    async with ReaperClient.from_environment():
+    async with Reaper():
         print(await sum_squares([1, 2, 3, 4]))
 
 

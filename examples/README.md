@@ -27,9 +27,11 @@ uv run reaper --pool 1
 Nothing has been submitted yet. The skeleton should become ready and remain
 idle; that is a complete, healthy Reaper runtime.
 
-`ReaperClient` does not contain or execute the worker. Clients connect to
-PostgreSQL to submit promises, while independently running skeletons claim and
-execute them. Reaper supervises those skeletons.
+The `reaper` command is the long-running worker supervisor. The `Reaper()`
+object used by application code is a short-lived PostgreSQL connection for
+submitting and awaiting promises; it does not contain or execute a worker.
+`Reaper()` loads `REAPER_` environment settings automatically, while an
+explicit `ReaperSettings` object can override them.
 
 ## 2. Hello world
 
@@ -96,6 +98,10 @@ uv run reaper --pool 1 --pool maintenance:1
 uv run python -m examples.durable_timer
 ```
 
-Each example keeps its durable functions and client entry point in one readable
-module. Run them with `python -m` as shown so Reaper records their importable
-module names for remote skeletons.
+The example first awaits a three-second timer so its behavior is immediately
+visible. It then submits a 30-day timer under a stable root ID and exits; Reaper
+keeps that longer wait durable across client and worker restarts.
+
+Each example keeps its durable functions and `Reaper()` entry point in one
+readable module. Run them with `python -m` as shown so Reaper records their
+importable module names for remote skeletons.

@@ -46,4 +46,3 @@ class SubmitTimer(QueryModel):
     def fingerprint(self) -> str:
         excluded = frozenset({"retention_ms"}) if self.root_id is not None else frozenset()
         return model_fingerprint(self, exclude=excluded)
-

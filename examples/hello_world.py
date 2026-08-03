@@ -2,7 +2,7 @@
 
 import asyncio
 
-from reaper import ReaperClient, durable
+from reaper import Reaper, durable
 
 
 @durable(execution_timeout=5.0)
@@ -11,7 +11,7 @@ async def hello(name: str) -> str:
 
 
 async def main() -> None:
-    async with ReaperClient.from_environment():
+    async with Reaper():
         print(await hello("world"))
 
 

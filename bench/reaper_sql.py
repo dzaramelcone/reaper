@@ -365,7 +365,7 @@ async def sample_pressure(
 
 
 async def run_workers(
-    store: reaper.Reaper,
+    store: reaper.Store,
     topic: str,
     workers: int,
     expected: int,
@@ -518,7 +518,7 @@ async def benchmark(config: BenchmarkConfig, dsn: str) -> RunMetrics:
         min_size=pool_size,
         max_size=pool_size,
     )
-    store = reaper.Reaper(pool)
+    store = reaper.Store(pool)
     prefix = f"bench-{uuid.uuid4().hex}"
     topic = prefix
     workloads = graph_workloads(config)

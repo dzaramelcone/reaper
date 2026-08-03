@@ -2,7 +2,7 @@
 
 import asyncio
 
-from reaper import ReaperClient, durable
+from reaper import Reaper, durable
 
 
 @durable(execution_timeout=5.0)
@@ -15,7 +15,7 @@ async def create_report(account_id: str) -> str:
 async def main() -> None:
     """Model the core of an HTTP endpoint returning 202 Accepted."""
 
-    async with ReaperClient.from_environment():
+    async with Reaper():
         promise = await create_report("account-42").submit(id="request-456")
     print(f"accepted promise {promise.id()}")
 

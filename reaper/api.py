@@ -1,4 +1,4 @@
-"""High-level Reaper domain facade."""
+"""High-level durable-store domain facade."""
 
 from reaper.database import ConnectionPool
 from reaper.maintenance import Maintenance
@@ -6,7 +6,7 @@ from reaper.promises import Promises
 from reaper.tasks import Tasks
 
 
-class Reaper:
+class Store:
     """Bind all durable-promise domains to one async connection pool."""
 
     def __init__(self, pool: ConnectionPool) -> None:

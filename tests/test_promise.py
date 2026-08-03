@@ -22,7 +22,7 @@ from reaper.promise import (
     DurableFunction,
     Injected,
     Promise,
-    ReaperClient,
+    Reaper,
     ReaperError,
     RetryableError,
     current_context,
@@ -31,6 +31,7 @@ from reaper.promise import (
     set_default_store,
 )
 from reaper.promises.models import PromiseRecord, SubmitTimer
+from reaper.settings import ReaperSettings
 from reaper.tasks.models import SubmitCall
 from tests.promise_graphs import (
     dag,
@@ -468,12 +469,26 @@ def test_decorator_preserves_the_public_static_return_type() -> None:
     assert "self" not in inspect.signature(durable).parameters
 
 
-def test_client_loads_environment_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Keep the getting-started client constructor concise and typed."""
+def test_reaper_loads_environment_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the getting-started Reaper constructor concise and typed."""
 
     monkeypatch.setenv("REAPER_POSTGRES_DSN", "postgresql://user:pass@localhost/example")
-    client = ReaperClient.from_environment()
+    client = Reaper()
     assert str(client.postgres_dsn) == "postgresql://user:pass@localhost/example"
+
+
+def test_reaper_accepts_settings_subclasses() -> None:
+    """Allow applications to extend the shared typed settings model."""
+
+    class ApplicationSettings(ReaperSettings):
+        service_name: str = "example"
+
+    settings = ApplicationSettings(
+        postgres_dsn="postgresql://user:pass@localhost/example",
+    )
+    client = Reaper(settings)
+    assert client.settings is settings
+    assert client.retention_ms == settings.retention_ms
 
 
 def test_module_entrypoint_function_name_is_importable(
